@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import socket from "../../socket";
+
+import socket from "config/socket";
+import ChatRoom from "screens/ChatRoom";
 
 const Layout = styled.main`
   height: 100vh;
@@ -27,52 +29,58 @@ const FormInput = styled.input`
   margin-right: 0.5rem;
 `;
 
-const NEW_CHAT_MESSAGE_EVENT = "newChatMessage";
-
 function Auth() {
-  const [isUserConnected, setIsUserConnected] = useState(socket.connected);
+  const [username, setUsername] = useState("");
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
-    // socket.on("connection", () => {
-    //   setIsUserConnected(true);
-    // });
-
+    // LOG EVERY EVENT - DEBUG
     socket.onAny((event, ...args) => {
-      console.log(event, args);
+      console.warn("++++++++", event, args);
     });
 
-    socket.on("disconnect", () => {
-      setIsUserConnected(false);
-    });
-
-    socket.on(NEW_CHAT_MESSAGE_EVENT, (msg) => {
-      console.log("++++", msg);
+    socket.on("connect_error", (err) => {
+      if (err.message === "invalid username") {
+        setUsername("");
+      }
     });
 
     return () => {
-      socket.off("connection");
-      socket.off("disconnect");
+      socket.off("connect_error");
     };
   }, []);
 
+  const onButtonClick = (event: any) => {
+    event.preventDefault();
+    if (username.length > 0) {
+      socket.auth = { username };
+      socket.connect();
+      setShowChat(true);
+    }
+  };
+
   return (
-    <Layout>
-      <Container>
-        <FormContainer>
-          <form>
-            <FormInput
-              type="text"
-              id="fname"
-              name="fname"
-              placeholder="Username"
-            />
-          </form>
-          <button onClick={() => socket.emit(NEW_CHAT_MESSAGE_EVENT, "bbbb")}>
-            Login
-          </button>
-        </FormContainer>
-      </Container>
-    </Layout>
+    <>
+      {showChat ? (
+        <ChatRoom />
+      ) : (
+        <Layout>
+          <Container>
+            <FormContainer>
+              <FormInput
+                type="text"
+                id="fname"
+                name="fname"
+                onChange={(event) => setUsername(event.target.value)}
+                value={username}
+                placeholder="Username"
+              />
+              <button onClick={onButtonClick}>Login</button>
+            </FormContainer>
+          </Container>
+        </Layout>
+      )}
+    </>
   );
 }
 
