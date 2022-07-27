@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import socket from "../../socket";
-import ChatRoom from "../ChatRoom";
+
+import socket from "config/socket";
+import ChatRoom from "screens/ChatRoom";
 
 const Layout = styled.main`
   height: 100vh;
